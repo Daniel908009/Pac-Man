@@ -9,15 +9,17 @@ import time
     # Clases
 # creating a player class
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, color, size):
+    def __init__(self, x, y, color, size, image):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.color = color
         self.size = size
+        self.image = image
         self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
 
     def draw(self, pac_man):
+        # drawing the player
         if curent_direction == "left":
             pac_man = pygame.transform.flip(pac_man, True, False)
         elif curent_direction == "right":
@@ -29,6 +31,7 @@ class Player(pygame.sprite.Sprite):
         screen.blit(pac_man, (self.x, self.y))
 
     def move(self, direction, pixel_size):
+        # moving the player based on the direction
         if direction == "left":
             self.x -= pixel_size
         if direction == "right":
@@ -37,60 +40,43 @@ class Player(pygame.sprite.Sprite):
             self.y -= pixel_size
         if direction == "down":
             self.y += pixel_size
+        self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        #print(self.rect)
 
 # creating a enemy class
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, color, size, state):
+    def __init__(self, x, y, color, size, state, image):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.color = color
         self.size = size
         self.state = state
+        self.image = image
         self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
 
     def draw(self, enemy):
+        # drawing the enemy
         screen.blit(enemy, (self.x, self.y))
     
     def determine_direction(self, walls):
         # checking if a direction is blocked by a wall and saving the possible direction
-        #print(walls)
-        #print(self.x, self.y)
         if (self.x , self.y) in walls:
             print("in wall")
         possible_directions = ["left", "right", "up", "down"]
         if (self.x+pixel_size , self.y) in walls:
             possible_directions.remove("right")
-            #print("removed right")
-        else:
-            #print(possible_directions)
-            pass
         if (self.x-pixel_size , self.y) in walls:
             possible_directions.remove("left")
-            #print("removed left")
-        else:
-            #print(possible_directions)
-            pass
         if (self.x , self.y+pixel_size) in walls:
             possible_directions.remove("down")
-            #print("removed down")
-        else:
-            #print(possible_directions)
-            pass
         if (self.x , self.y-pixel_size) in walls:
             possible_directions.remove("up")
-            #print("removed up")
-        else:
-            #print(possible_directions)
-            pass
-        #print(possible_directions)
         self.direction = random.choice(possible_directions)
-        #print(self.direction)
 
     def move(self, pixel_size):
         # based on the direction the enemy will move
         if self.state == "enabled":
-            #print(self.direction)
             if self.direction == "left":
                 self.x -= pixel_size
             if self.direction == "right":
@@ -99,6 +85,8 @@ class Enemy(pygame.sprite.Sprite):
                 self.y -= pixel_size
             if self.direction == "down":
                 self.y += pixel_size
+            self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
+            #print(self.rect)
 
 # creating a dot class
 class Dot(pygame.sprite.Sprite):
@@ -110,20 +98,47 @@ class Dot(pygame.sprite.Sprite):
         self.size = size
 
     def draw(self, image):
+        # drawing the dots
         screen.blit(image, (self.x, self.y))
 
 # function to reset the game
 def reset():
+    global player, enemy, num_of_enemies, enemy_coodinates, curent_direction, enemies, score, temp_score, dots, dots_list, number_of_dots, pixel_size, resized_dot, resized_pac_man, resized_enemy, width, height, column, row
+    # getting the new width and height of the screen, currently causes a lot of issues
+    pass
+
+    # resetting the row and column lists
+    row.clear()
+    column.clear()
+    for i in range(0, width, pixel_size):
+        row.append(i)
+    for i in range(0, height, pixel_size):
+        column.append(i)
+
+    # reseting the pixel size, and resizing everything that is based on the pixel size
+    pixel_size = width//19
+    resized_dot = pygame.transform.scale(dot_image, (pixel_size, pixel_size))
+    resized_pac_man = pygame.transform.scale(pac_man, (pixel_size, pixel_size))
+    resized_enemy = pygame.transform.scale(enemy_image, (pixel_size, pixel_size))
     # resetting the player and the enemies
-    global player, enemy, num_of_enemies, enemy_coodinates, curent_direction, enemies
     player.x = 9*pixel_size
     player.y = 5*pixel_size
     curent_direction = ""
+    # reseting the list of coordinates of the walls
+    global coords_of_walls
+    coords_of_walls.clear()
+    for i in range(columns):
+        for j in range(rows):
+            if map[i][j] == [1]:
+                coords_of_walls.append((j*pixel_size, i*pixel_size))
+    # resetting the enemies to have the new size and a new pixel size
     i = 0
     for enemy in enemies:
-        enemy.state = "disabled"
+        #print("reseting enemy")
         enemy.x = enemy_coodinates[i][0]*pixel_size
         enemy.y = enemy_coodinates[i][1]*pixel_size
+        enemy.size = pixel_size
+        enemy.image = resized_enemy
         i += 1
     # resetting the score
     global score, temp_score
@@ -149,20 +164,31 @@ def releasing_enemies():
                 if enemy.state == "disabled":
                     enemy.state = "enabled"
                     temp_score = 0
-                    #print(enemy.state)
                     break
         time.sleep(0.5)
 
 # function to display the game over screen
 def game_over(text):
-    global running
+    global running, score, number_of_dots
     game_overa = True
+    # main loop for the game over screen
     while game_overa:
+        # setting the background color
         screen.fill((0, 0, 0))
+        # displaying the text, saying if player won or lost
         font = pygame.font.Font("freesansbold.ttf", 32)
         texta = font.render(text, True, (255, 255, 255))
         screen.blit(texta, (300, 300))
+        # displaying the score
+        score_text = font.render("Score: " + str(score), True, (255, 255, 255))
+        screen.blit(score_text, (300, 350))
+        # displaying how many dots are left
+        dots_left = font.render("Dots left: " + str(number_of_dots-score), True, (255, 255, 255))
+        screen.blit(dots_left, (300, 400))
+
+        # updating the screen
         pygame.display.update()
+        # checking for events
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
@@ -175,18 +201,20 @@ def game_over(text):
 # initialize pygame
 pygame.init()
 # setting up the screen
-screen = pygame.display.set_mode((760, 600))
+width = 760
+height = 600
+screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 # setting up the title and icon
 pygame.display.set_caption("Pac Man")
 icon = pygame.image.load("pac man.png")
 pygame.display.set_icon(icon)
 
-pixel_size = 40
+pixel_size = width//19
 row = []
 column = []
-for i in range(0, 760, pixel_size):
+for i in range(0, width, pixel_size):
     row.append(i)
-for i in range(0, 600, pixel_size):
+for i in range(0, height, pixel_size):
     column.append(i)
 # creating a map of the walls, currently it will be done manually
 map = [[[1],[1],[1],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[1],[1],[1]], 
@@ -196,8 +224,8 @@ map = [[[1],[1],[1],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[1],[1],[1]],
        [[],[],[1],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[1],[],[]], 
        [[],[],[1],[],[1],[1],[],[],[],[2],[],[],[],[1],[1],[],[1],[],[]], 
        [[],[],[],[],[1],[1],[],[1],[1],[2],[1],[1],[],[1],[1],[],[],[],[]], 
-       [[],[1],[1],[],[],[1],[],[1],[2],[2],[2],[1],[],[1],[],[],[1],[1],[]], 
-       [[],[],[],[],[],[],[],[1],[2],[2],[2],[1],[],[],[],[],[],[],[]], 
+       [[],[1],[1],[],[],[1],[],[1],[2],[2],[1],[1],[],[1],[],[],[1],[1],[]], 
+       [[],[],[],[],[],[],[],[1],[1],[2],[2],[1],[],[],[],[],[],[],[]], 
        [[],[1],[1],[1],[],[],[],[1],[1],[1],[1],[1],[],[],[],[1],[1],[1],[]], 
        [[],[],[],[],[],[1],[],[],[],[],[],[],[],[1],[],[],[],[],[]], 
        [[],[],[1],[],[1],[1],[],[1],[1],[1],[1],[1],[],[1],[1],[],[1],[],[]], 
@@ -236,17 +264,18 @@ num_of_enemies = 4
 enemy_image = pygame.image.load("ghost.png")
 resized_enemy = pygame.transform.scale(enemy_image, (pixel_size, pixel_size))
 enemy = []
-enemy_coodinates = [[9, 7], [8, 7], [10, 7], [9, 8]]
+# starting coordinates of the enemies
+enemy_coodinates = [[9, 7], [8, 7], [10, 8], [9, 8]]
 enemies = pygame.sprite.Group()
 for i in range(num_of_enemies):
-    enemy.append(Enemy(enemy_coodinates[i][0]*pixel_size, enemy_coodinates[i][1]*pixel_size, (255, 0, 0), pixel_size, "disabled"))
+    enemy.append(Enemy(enemy_coodinates[i][0]*pixel_size, enemy_coodinates[i][1]*pixel_size, (255, 0, 0), pixel_size, "disabled", resized_enemy))
     enemies.add(enemy[i])
 
 # creating the player
 pac_man = pygame.image.load("pac man image.png")
 # resizing the image
 resized_pac_man = pygame.transform.scale(pac_man, (pixel_size, pixel_size))
-player = Player(9*pixel_size, 5*pixel_size, (0, 255, 0), pixel_size)
+player = Player(9*pixel_size, 5*pixel_size, (0, 255, 0), pixel_size, resized_pac_man)
 curent_direction = ""
 score = 0
 temp_score = 0
@@ -276,16 +305,12 @@ while running:
     for dot in dots:
         dot.draw(resized_dot)
 
-    # drawing the enemies
-    for enemy in enemies:
-        enemy.draw(resized_enemy)
-
     # checking for events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            # checking for key presses to set the direction of the player
+            # checking for key presses to set the direction of the player or reset the game
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 if curent_direction == "right":
                     pass
@@ -324,12 +349,12 @@ while running:
     # checking for collision between player and walls
     # if a collision is detected the player will be teleported to the other side of the screen
     if player.x < 0:
-        player.x = 760
-    if player.x > 760:
+        player.x = width
+    if player.x > width:
         player.x = 0
     if player.y < 0:
-        player.y = 560
-    if player.y > 560:
+        player.y = height - pixel_size
+    if player.y > height - pixel_size:
         player.y = 0
     
     # checking for collision between player and dots
@@ -359,19 +384,12 @@ while running:
     # checking for win
     if score == number_of_dots:
         game_over("You win!")
-    
-    # drawing the player
-    player.draw(resized_pac_man)
 
     # drawing grid, this is mainly for debugging
     for i in range(rows):
-        pygame.draw.line(screen, (255, 255, 255), (row[i], 0), (row[i], 600))
+        pygame.draw.line(screen, (255, 255, 255), (row[i], 0), (row[i], height))
     for i in range(columns):
-        pygame.draw.line(screen, (255, 255, 255), (0, column[i]), (760, column[i]))
-
-    # drawing red dot on the walls in the list of wall coordinates, this is mainly for debugging
-    #for coord in coords_of_walls:
-        #pygame.draw.rect(screen, (255, 0, 0), (coord[0], coord[1], pixel_size, pixel_size))
+        pygame.draw.line(screen, (255, 255, 255), (0, column[i]), (width, column[i]))
 
     # moving the enemies
     for enemy in enemies:
@@ -400,18 +418,24 @@ while running:
     # checking if enemy colided with outer walls, if yes it will be teleported to the other side of the screen
     for enemy in enemies:
         if enemy.x < 0:
-            enemy.x = 760
-        if enemy.x > 760:
+            enemy.x = width
+        if enemy.x > width:
             enemy.x = 0
         if enemy.y < 0:
-            enemy.y = 560
-        if enemy.y > 560:
+            enemy.y = height - pixel_size
+        if enemy.y > height - pixel_size:
             enemy.y = 0
+        
+    # drawing the player
+    player.draw(resized_pac_man)
+
+    # drawing the enemies
+    for enemy in enemies:
+        enemy.draw(resized_enemy)
     
     # checking for collision between player and enemies
-    for enemy in enemies:
-        if player.x == enemy.x and player.y == enemy.y:
-            game_over("You lose!")
+    if pygame.sprite.spritecollide(player, enemies, False):
+        game_over("You lost!")
 
     # setting the frame rate
     pygame_clock.tick(4)
