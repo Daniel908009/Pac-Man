@@ -30,19 +30,119 @@ class Player(pygame.sprite.Sprite):
         elif curent_direction == "down":
             pac_man = pygame.transform.rotate(pac_man, -90)
         screen.blit(pac_man, (self.x, self.y))
+    
+    # function to change the direction of the player, and also verify that its not going to collide with a wall
+    def change_direction(self, direction):
+        global curent_direction
+        if direction == "left":
+            if (self.x-pixel_size, self.y) in coords_of_walls:
+                pass
+            else:
+                curent_direction = "left"
+        if direction == "right":
+            if (self.x+pixel_size, self.y) in coords_of_walls:
+                pass
+            else:
+                curent_direction = "right"
+        if direction == "up":
+            if (self.x, self.y-pixel_size) in coords_of_walls:
+                pass
+            else:
+                curent_direction = "up"
+        if direction == "down":
+            if (self.x, self.y+pixel_size) in coords_of_walls:
+                pass
+            else:
+                curent_direction = "down"
 
     def move(self, direction, pixel_size):
-        # moving the player based on the direction
+        # moving the player based on the direction, first checks if the player is not going to collide with a wall
         if direction == "left":
-            self.x -= pixel_size
+            if (self.x-pixel_size, self.y) in coords_of_walls:
+                pass
+            else:
+                self.x -= pixel_size
         if direction == "right":
-            self.x += pixel_size
+            if (self.x+pixel_size, self.y) in coords_of_walls:
+                pass
+            else:
+                self.x += pixel_size
         if direction == "up":
-            self.y -= pixel_size
+            if (self.x, self.y-pixel_size) in coords_of_walls:
+                pass
+            else:
+                self.y -= pixel_size
         if direction == "down":
-            self.y += pixel_size
+            if (self.x, self.y+pixel_size) in coords_of_walls:
+                pass
+            else:
+                self.y += pixel_size
         self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
-        #print(self.rect)
+    
+    # function to automatically change the direction of the player if there is a wall in the way and he has only one way to go
+    # by the way the large amount of try and except blocks is because one direction can be removed multiple times, so it will throw an error
+    def auto_change(self):
+        global curent_direction
+        possible_directions = ["left", "right", "up", "down"]
+        if curent_direction == "left":
+            try:
+                possible_directions.remove("right")
+            except:
+                pass
+        if curent_direction == "right":
+            try:
+                possible_directions.remove("left")
+            except:
+                pass
+        if curent_direction == "up":
+            try:
+                possible_directions.remove("down")
+            except:
+                pass
+        if curent_direction == "down":
+            try:
+                possible_directions.remove("up")
+            except:
+                pass
+        if (self.x+pixel_size , self.y) in coords_of_walls:
+            try:
+                possible_directions.remove("right")
+            except:
+                pass
+        if (self.x-pixel_size , self.y) in coords_of_walls:
+            try:
+                possible_directions.remove("left")
+            except:
+                pass
+        if (self.x , self.y+pixel_size) in coords_of_walls:
+            try:
+                possible_directions.remove("down")
+            except:
+                pass
+        if (self.x , self.y-pixel_size) in coords_of_walls:
+            try:
+                possible_directions.remove("up")
+            except:
+                pass
+        #print(len(possible_directions))
+        if len(possible_directions) == 1:
+            #print("changing direction")
+            curent_direction = possible_directions[0]
+        
+        # this isnt realy necesery, so it is commented out
+        # it is just a way to prevent the player from standing still, but it ruins the game because it takes control from the player
+        #if curent_direction == "left":
+        #    if (self.x-pixel_size, self.y) in coords_of_walls:
+        #        curent_direction = random.choice(possible_directions)
+        #if curent_direction == "right":
+        #    if (self.x+pixel_size, self.y) in coords_of_walls:
+        #        curent_direction = random.choice(possible_directions)
+        #if curent_direction == "up":
+        #    if (self.x, self.y-pixel_size) in coords_of_walls:
+        #        curent_direction = random.choice(possible_directions)
+        #if curent_direction == "down":
+        #    if (self.x, self.y+pixel_size) in coords_of_walls:
+        #        curent_direction = random.choice(possible_directions)
 
 # creating a enemy class
 class Enemy(pygame.sprite.Sprite):
@@ -289,19 +389,19 @@ for i in range(0, height, pixel_size):
     column.append(i)
 # creating a map of the walls, currently it will be done manually
 map = [[[1],[1],[1],[1],[1],[1],[1],[1],[1],[],[1],[1],[1],[1],[1],[1],[1],[1],[1]], 
-       [[1],[],[],[],[1],[],[],[],[1],[],[1],[],[],[],[1],[],[],[],[1]], 
-       [[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1]], 
+       [[1],[],[],[],[1],[],[],[],[],[],[],[],[],[],[1],[],[],[],[1]], 
+       [[1],[],[1],[],[1],[],[1],[],[1],[1],[1],[],[1],[],[1],[],[1],[],[1]], 
        [[],[],[1],[],[1],[],[1],[],[],[],[],[],[1],[],[1],[],[1],[],[]], 
-       [[],[],[1],[],[],[],[1],[1],[1],[],[1],[1],[1],[],[],[],[1],[],[]], 
-       [[],[],[1],[],[1],[],[],[],[],[2],[],[],[],[],[1],[],[1],[],[]], 
+       [[],[],[1],[],[1],[],[1],[1],[1],[],[1],[1],[1],[],[1],[],[1],[],[]], 
+       [[],[],[1],[],[],[],[],[],[],[2],[],[],[],[],[],[],[1],[],[]], 
        [[],[],[],[],[1],[1],[],[1],[1],[2],[1],[1],[],[1],[1],[],[],[],[]], 
-       [[],[1],[1],[],[],[1],[],[1],[2],[2],[1],[1],[],[1],[],[],[1],[1],[]], 
-       [[],[],[],[],[],[],[],[1],[1],[2],[2],[1],[],[],[],[],[],[],[]], 
+       [[1],[1],[1],[],[],[1],[],[1],[2],[2],[1],[1],[],[1],[],[],[1],[1],[1]], 
+       [[],[],[],[],[],[1],[],[1],[1],[2],[2],[1],[],[1],[],[],[],[],[]], 
        [[],[1],[1],[1],[],[],[],[1],[1],[1],[1],[1],[],[],[],[1],[1],[1],[]], 
        [[],[],[],[],[],[1],[],[],[],[],[],[],[],[1],[],[],[],[],[]], 
-       [[],[],[1],[],[1],[1],[],[1],[1],[1],[1],[1],[],[1],[1],[],[1],[],[]], 
-       [[1],[],[1],[],[1],[1],[],[],[],[],[],[],[],[1],[1],[],[1],[],[1]], 
-       [[1],[],[],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[],[],[1]], 
+       [[1],[],[1],[],[1],[1],[],[1],[1],[1],[1],[1],[],[1],[1],[],[1],[],[1]], 
+       [[1],[],[1],[],[1],[],[],[],[],[],[],[],[],[],[1],[],[1],[],[1]], 
+       [[1],[],[],[],[],[],[1],[1],[1],[],[1],[1],[1],[],[],[],[],[],[1]], 
        [[1],[1],[1],[1],[1],[1],[1],[1],[1],[],[1],[1],[1],[1],[1],[1],[1],[1],[1]]]
 
 rows = len(row)
@@ -400,22 +500,22 @@ while running:
                 if curent_direction == "right":
                     pass
                 else:
-                    curent_direction = "left"
+                    player.change_direction("left")
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 if curent_direction == "left":
                     pass
                 else:
-                    curent_direction = "right"
+                    player.change_direction("right")
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 if curent_direction == "down":
                     pass
                 else:
-                    curent_direction = "up"
+                    player.change_direction("up")
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 if curent_direction == "up":
                     pass
                 else:
-                    curent_direction = "down"
+                    player.change_direction("down")
             if event.key == pygame.K_r or event.key == pygame.K_r:
                 reset()
 
@@ -434,8 +534,8 @@ while running:
     # checking for collision between player and walls
     # if a collision is detected the player will be teleported to the other side of the screen
     if player.x < 0:
-        player.x = width
-    if player.x > width:
+        player.x = width - pixel_size
+    if player.x > width - pixel_size:
         player.x = 0
     if player.y < 0:
         player.y = height - pixel_size
@@ -470,7 +570,7 @@ while running:
     if score == number_of_dots:
         game_over("You win!")
 
-    # drawing grid, this is mainly for debugging
+    # drawing grid, this is now a usefull feature
     for i in range(rows):
         pygame.draw.line(screen, (255, 255, 255), (row[i], 0), (row[i], height))
     for i in range(columns):
@@ -535,6 +635,18 @@ while running:
             resized_pac_man = pygame.transform.scale(pygame.image.load("pac man image.png"), (pixel_size, pixel_size))
         else:
             game_over("You lost!")
+
+    # calling the auto_change function for the player
+    player.auto_change()
+
+    # if the game hasnt started yet, this message will be displayed
+    if score == 0:
+        font = pygame.font.Font("freesansbold.ttf", 32)
+        text = font.render("Press WSAD or any arrow to start", True, (255, 255, 255))
+        # creating a background for the message
+        pygame.draw.rect(screen, (0, 0, 0), (width//4, height//4, text.get_width(), 50))
+        # displaying the message
+        screen.blit(text, (width//4, height//4))
 
     # setting the frame rate
     pygame_clock.tick(4)
