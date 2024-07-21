@@ -15,6 +15,7 @@ class Player(pygame.sprite.Sprite):
         self.y = y
         self.color = color
         self.size = size
+        self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
 
     def draw(self, pac_man):
         if curent_direction == "left":
@@ -46,17 +47,50 @@ class Enemy(pygame.sprite.Sprite):
         self.color = color
         self.size = size
         self.state = state
+        self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
 
     def draw(self, enemy):
         screen.blit(enemy, (self.x, self.y))
     
-    def determine_direction(self, directions):
-        # the most temporary solution to the problem, will be changed later
-        self.direction = random.choice(["left", "right", "up", "down"])
+    def determine_direction(self, walls):
+        # checking if a direction is blocked by a wall and saving the possible direction
+        #print(walls)
+        #print(self.x, self.y)
+        if (self.x , self.y) in walls:
+            print("in wall")
+        possible_directions = ["left", "right", "up", "down"]
+        if (self.x+pixel_size , self.y) in walls:
+            possible_directions.remove("right")
+            #print("removed right")
+        else:
+            #print(possible_directions)
+            pass
+        if (self.x-pixel_size , self.y) in walls:
+            possible_directions.remove("left")
+            #print("removed left")
+        else:
+            #print(possible_directions)
+            pass
+        if (self.x , self.y+pixel_size) in walls:
+            possible_directions.remove("down")
+            #print("removed down")
+        else:
+            #print(possible_directions)
+            pass
+        if (self.x , self.y-pixel_size) in walls:
+            possible_directions.remove("up")
+            #print("removed up")
+        else:
+            #print(possible_directions)
+            pass
+        #print(possible_directions)
+        self.direction = random.choice(possible_directions)
+        #print(self.direction)
 
     def move(self, pixel_size):
         # based on the direction the enemy will move
         if self.state == "enabled":
+            #print(self.direction)
             if self.direction == "left":
                 self.x -= pixel_size
             if self.direction == "right":
@@ -115,24 +149,28 @@ def releasing_enemies():
                 if enemy.state == "disabled":
                     enemy.state = "enabled"
                     temp_score = 0
-                    print(enemy.state)
+                    #print(enemy.state)
                     break
         time.sleep(0.5)
 
-        # first attempt at releasing the enemies failed
-    #first_enemy_released = False
-    #second_enemy_released = False
-    #third_enemy_released = False
-    #fourth_enemy_released = False
-    #temp = []
-    #for enemy in enemies:
-    #    temp.append(enemy)
-    #while running:
-    #    if score > 10 and temp[0].state == "disabled":
-    #        temp[0].state = "enabled"
-    #        first_enemy_released = True
-    #        print(temp[0].state)
-    #    time.sleep(1)
+# function to display the game over screen
+def game_over(text):
+    global running
+    game_overa = True
+    while game_overa:
+        screen.fill((0, 0, 0))
+        font = pygame.font.Font("freesansbold.ttf", 32)
+        texta = font.render(text, True, (255, 255, 255))
+        screen.blit(texta, (300, 300))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    reset()
+                    game_overa = False
+            if event.type == pygame.QUIT:
+                running = False
+                game_overa = False
 
 # initialize pygame
 pygame.init()
@@ -151,25 +189,31 @@ for i in range(0, 760, pixel_size):
 for i in range(0, 600, pixel_size):
     column.append(i)
 # creating a map of the walls, currently it will be done manually
-map = [[[1],[1],[1],[],[],[],[],[],[1],[],[1],[],[],[],[],[],[1],[1],[1]], 
-       [[1],[],[],[],[],[],[1],[],[1],[],[1],[],[1],[],[],[],[],[],[1]], 
+map = [[[1],[1],[1],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[1],[1],[1]], 
+       [[1],[],[],[],[1],[],[],[],[1],[],[1],[],[],[],[1],[],[],[],[1]], 
        [[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1],[],[1]], 
-       [[],[],[1],[],[],[],[],[],[],[],[],[],[],[],[],[],[1],[],[]], 
+       [[],[],[1],[],[1],[],[1],[],[],[],[],[],[1],[],[1],[],[1],[],[]], 
        [[],[],[1],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[1],[],[]], 
-       [[],[],[],[],[],[1],[],[],[],[2],[],[],[],[1],[],[],[],[],[]], 
+       [[],[],[1],[],[1],[1],[],[],[],[2],[],[],[],[1],[1],[],[1],[],[]], 
        [[],[],[],[],[1],[1],[],[1],[1],[2],[1],[1],[],[1],[1],[],[],[],[]], 
        [[],[1],[1],[],[],[1],[],[1],[2],[2],[2],[1],[],[1],[],[],[1],[1],[]], 
        [[],[],[],[],[],[],[],[1],[2],[2],[2],[1],[],[],[],[],[],[],[]], 
        [[],[1],[1],[1],[],[],[],[1],[1],[1],[1],[1],[],[],[],[1],[1],[1],[]], 
        [[],[],[],[],[],[1],[],[],[],[],[],[],[],[1],[],[],[],[],[]], 
-       [[],[],[1],[],[],[1],[],[],[1],[1],[1],[],[],[1],[],[],[1],[],[]], 
+       [[],[],[1],[],[1],[1],[],[1],[1],[1],[1],[1],[],[1],[1],[],[1],[],[]], 
        [[1],[],[1],[],[1],[1],[],[],[],[],[],[],[],[1],[1],[],[1],[],[1]], 
        [[1],[],[],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[],[],[1]], 
        [[1],[1],[1],[],[],[],[],[1],[1],[],[1],[1],[],[],[],[],[1],[1],[1]]]
 
 rows = len(row)
 columns = len(column)
-#print(rows, columns)
+
+# creating a list of the coordinates of the walls
+coords_of_walls = []
+for i in range(columns):
+    for j in range(rows):
+        if map[i][j] == [1]:
+            coords_of_walls.append((j*pixel_size, i*pixel_size))
 
 dots = pygame.sprite.Group()
 dots_list = []
@@ -215,6 +259,8 @@ running = True
 # setting up a thread for the release of the enemies
 thread1 = threading.Thread(target=releasing_enemies)
 thread1.start()
+
+# the game main loop
 while running:
 
     # setting the background color
@@ -312,8 +358,7 @@ while running:
     
     # checking for win
     if score == number_of_dots:
-        print("You win!")
-        running = False
+        game_over("You win!")
     
     # drawing the player
     player.draw(resized_pac_man)
@@ -324,35 +369,49 @@ while running:
     for i in range(columns):
         pygame.draw.line(screen, (255, 255, 255), (0, column[i]), (760, column[i]))
 
+    # drawing red dot on the walls in the list of wall coordinates, this is mainly for debugging
+    #for coord in coords_of_walls:
+        #pygame.draw.rect(screen, (255, 0, 0), (coord[0], coord[1], pixel_size, pixel_size))
+
     # moving the enemies
     for enemy in enemies:
-        # checking in which direction the enemy can move
-        # if the enemy can move in multiple directions, the enemy will randomly choose a direction
-        directions = []
-        if enemy.x - pixel_size >= 0:
-            if map[enemy.y//pixel_size][(enemy.x//pixel_size)-1] != [1]:
-                directions.append("left")
-        if enemy.x + pixel_size < 760:
-            if map[enemy.y//pixel_size][(enemy.x//pixel_size)+1] != [1]:
-                directions.append("right")
-        if enemy.y - pixel_size >= 0:
-            if map[(enemy.y//pixel_size)-1][enemy.x//pixel_size] != [1]:
-                directions.append("up")
-        if enemy.y + pixel_size < 600:
-            if map[(enemy.y//pixel_size)+1][enemy.x//pixel_size] != [1]:
-                directions.append("down")
-        #print(directions)
-
-        # the actual movement of the enemies
-        enemy.determine_direction(directions)
-        enemy.move(pixel_size)
-        directions.clear()
+        # checking if the enemy is enabled
+        if enemy.state == "enabled":
+            # if the enemy has a wall in the direction it is moving, it will change direction
+            try:
+                if enemy.direction == "left":
+                    if (enemy.x-pixel_size, enemy.y) in coords_of_walls:
+                        enemy.determine_direction(coords_of_walls)
+                if enemy.direction == "right":
+                    if (enemy.x+pixel_size, enemy.y) in coords_of_walls:
+                        enemy.determine_direction(coords_of_walls)
+                if enemy.direction == "up":
+                    if (enemy.x, enemy.y-pixel_size) in coords_of_walls:
+                        enemy.determine_direction(coords_of_walls)
+                if enemy.direction == "down":
+                    if (enemy.x, enemy.y+pixel_size) in coords_of_walls:
+                        enemy.determine_direction(coords_of_walls)
+                # actual movement of the enemy
+                enemy.move(pixel_size)
+            except:
+                # this should only happen if the enemy doesnt have a direction yet
+                enemy.determine_direction(coords_of_walls)
+                
+    # checking if enemy colided with outer walls, if yes it will be teleported to the other side of the screen
+    for enemy in enemies:
+        if enemy.x < 0:
+            enemy.x = 760
+        if enemy.x > 760:
+            enemy.x = 0
+        if enemy.y < 0:
+            enemy.y = 560
+        if enemy.y > 560:
+            enemy.y = 0
     
     # checking for collision between player and enemies
     for enemy in enemies:
         if player.x == enemy.x and player.y == enemy.y:
-            print("Game Over!")
-            running = False
+            game_over("You lose!")
 
     # setting the frame rate
     pygame_clock.tick(4)
