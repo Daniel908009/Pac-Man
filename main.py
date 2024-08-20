@@ -3,7 +3,12 @@ import pygame
 import random
 import threading
 import time
-
+import sys
+import os
+if hasattr(sys, '_MEIPASS'):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.abspath(".")
 
 
     # Clases
@@ -416,7 +421,7 @@ for i in range(columns):
 
 dots = pygame.sprite.Group()
 dots_list = []
-dot_image = pygame.image.load("dot.png")
+dot_image = pygame.image.load(os.path.join(base_path,"dot.png"))
 resized_dot = pygame.transform.scale(dot_image, (pixel_size, pixel_size))
 number_of_dots = 0
 
@@ -431,7 +436,7 @@ for i in range(columns):
             number_of_dots += 1
 
 # creating the power up in place of one of the dots, chosen randomly
-power_up_image = pygame.image.load("power_up.png")
+power_up_image = pygame.image.load(os.path.join(base_path,"power_up.png"))
 resized_power_up = pygame.transform.scale(power_up_image, (pixel_size, pixel_size))
 # picking a random position for the power up, until it is not in a wall
 rowup = 0
@@ -443,7 +448,7 @@ power_up = Power_up(rowup, columnup, pixel_size)
 
 # creating the enemies
 num_of_enemies = 4
-enemy_image = pygame.image.load("ghost.png")
+enemy_image = pygame.image.load(os.path.join(base_path,"ghost.png"))
 resized_enemy = pygame.transform.scale(enemy_image, (pixel_size, pixel_size))
 enemy = []
 # starting coordinates of the enemies
@@ -454,7 +459,7 @@ for i in range(num_of_enemies):
     enemies.add(enemy[i])
 
 # creating the player
-pac_man = pygame.image.load("pac man image.png")
+pac_man = pygame.image.load(os.join.path(base_path, "pac man image.png"))
 # resizing the image
 resized_pac_man = pygame.transform.scale(pac_man, (pixel_size, pixel_size))
 player = Player(9*pixel_size, 5*pixel_size, (0, 255, 0), pixel_size, resized_pac_man, False)
@@ -619,7 +624,7 @@ while running:
         power_up.rect = pygame.Rect(power_up.x, power_up.y, power_up.size, power_up.size)
         # applying a shield to the player
         player.shield = True
-        resized_pac_man = pygame.transform.scale(pygame.image.load("shielded.png"), (pixel_size, pixel_size))
+        resized_pac_man = pygame.transform.scale(pygame.image.load(os.path.join(base_path, "shielded.png")), (pixel_size, pixel_size))
         
     # drawing the player
     player.draw(resized_pac_man)
@@ -632,7 +637,7 @@ while running:
     if pygame.sprite.spritecollide(player, enemies, False):
         if player.shield:
             player.shield = False
-            resized_pac_man = pygame.transform.scale(pygame.image.load("pac man image.png"), (pixel_size, pixel_size))
+            resized_pac_man = pygame.transform.scale(pygame.image.load(os.path.join(base_path,"pac man image.png")), (pixel_size, pixel_size))
         else:
             game_over("You lost!")
 
