@@ -382,7 +382,7 @@ height = 600
 screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 # setting up the title and icon
 pygame.display.set_caption("Pac Man")
-icon = pygame.image.load("pac man.png")
+icon = pygame.image.load(os.path.join(base_path,"pac man.png"))
 pygame.display.set_icon(icon)
 
 pixel_size = width//19
