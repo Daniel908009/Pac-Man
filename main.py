@@ -459,7 +459,7 @@ for i in range(num_of_enemies):
     enemies.add(enemy[i])
 
 # creating the player
-pac_man = pygame.image.load(os.join.path(base_path, "pac man image.png"))
+pac_man = pygame.image.load(os.path.join(base_path, "pac man image.png"))
 # resizing the image
 resized_pac_man = pygame.transform.scale(pac_man, (pixel_size, pixel_size))
 player = Player(9*pixel_size, 5*pixel_size, (0, 255, 0), pixel_size, resized_pac_man, False)
